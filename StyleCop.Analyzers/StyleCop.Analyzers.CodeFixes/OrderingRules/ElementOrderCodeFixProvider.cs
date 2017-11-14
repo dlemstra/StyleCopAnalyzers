@@ -144,6 +144,16 @@ namespace StyleCop.Analyzers.OrderingRules
                 var indentationString = IndentationHelper.GenerateIndentationString(indentationSettings, targetIndentationLevel);
                 memberToMove = memberToMove.WithLeadingTrivia(SyntaxFactory.Whitespace(indentationString));
             }
+            else
+            {
+                var triviaList = memberToMove.GetLeadingTrivia();
+                int regionIndex = triviaList.IndexOf(SyntaxKind.RegionDirectiveTrivia);
+                if (regionIndex != -1)
+                {
+                    triviaList = triviaList.Skip(regionIndex + 1).ToSyntaxTriviaList();
+                    memberToMove = memberToMove.WithLeadingTrivia(triviaList);
+                }
+            }
 
             if (!HasLeadingBlankLines(targetMember)
                 && HasLeadingBlankLines(member))

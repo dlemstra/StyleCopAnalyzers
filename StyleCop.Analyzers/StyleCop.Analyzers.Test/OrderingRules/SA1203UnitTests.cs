@@ -385,6 +385,45 @@ const string foo = ""a"";
         }
 
         /// <summary>
+        /// Test if a field inside a region is correctly moved.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
+        [Fact]
+        [WorkItem(2112, "https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2112")]
+        public async Task TestFieldInsideRegionIsMovedCorrectlyAsync()
+        {
+            var testCode = @"public class MyClass
+{
+    #region region 1
+    public int field1;
+    #endregion
+
+    #region region 2
+
+    /// <summary>FooBar</summary>
+    public const int Const = 1;
+    #endregion
+}
+";
+
+            var expectedDiagnostic = this.CSharpDiagnostic().WithLocation(10, 22);
+            await this.VerifyCSharpDiagnosticAsync(testCode, expectedDiagnostic, CancellationToken.None).ConfigureAwait(false);
+
+            var fixedTestCode = @"public class MyClass
+{
+
+    /// <summary>FooBar</summary>
+    public const int Const = 1;
+    #region region 1
+    public int field1;
+    #endregion
+}
+";
+            await this.VerifyCSharpDiagnosticAsync(fixedTestCode, EmptyDiagnosticResults, CancellationToken.None).ConfigureAwait(false);
+            await this.VerifyCSharpFixAsync(testCode, fixedTestCode).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Verifies that the code fix will move the non-constant fields before the constant ones when element access is
         /// not considered for ordering.
         /// </summary>
